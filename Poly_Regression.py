@@ -76,3 +76,44 @@ class L1LinearRegression():
 test.fit([1, 2, 3, 4, 5], [1, 2, 3, 4, 5])
 print(test.a)
 print(sign(0))
+
+
+class L1PolyLeastSquares():
+    def __init__(self, degree=1, L1_penalty=1, learning_rate=0.01, max_iterations=1000, tol=1e-6):
+        self.n = degree+1
+        self.a = np.zeros(degree+1)
+        self.L1_penalty = L1_penalty
+        self.learning_rate = learning_rate
+        self.max_iterations = max_iterations
+        self.tol = tol
+
+    def fit(self, x, y):
+        self.x = np.array(x)
+        self.y = np.array(y)
+        self.n = len(x)
+        self.a = np.zeros(self.n)
+
+        X = np.array([x**i for i in range(self.n)]).transpose()
+        model = L1LinearRegression(self.learning_rate, self.max_iterations, self.L1_penalty, self.tol)
+        self.a = np.flip(model.fit(X, y))
+
+        return self.a
+    
+    def plot_Data(self):
+        plt.plot(self.x, self.y, 'ro')
+        plt.show()
+        return
+
+    def plot_Fit(self): 
+        x = np.linspace(min(self.x), max(self.x), 100)
+        y = np.sum([self.a[i]*x**i for i in range(self.n)], axis=0)
+        plt.plot(x, y, 'b')
+        plt.show()
+        return
+    
+    def plot_Both(self):
+        x = np.linspace(min(self.x), max(self.x), 100)
+        y = np.sum([self.a[i]*x**i for i in range(self.n)], axis=0) 
+        plt.plot(self.x, self.y, 'ro', x, y, 'b')
+        plt.show()       
+        return
