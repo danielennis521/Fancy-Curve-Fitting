@@ -1,6 +1,7 @@
-from numpy import array, zeros, sign, abs
+from numpy import array, zeros, sign, abs, linspace, sum, dot, insert
 from numpy import linalg as la
 import matplotlib.pyplot as plt
+
 
 class PolyLeastSquares():
     def __init__(self, degree=1):
@@ -12,80 +13,65 @@ class PolyLeastSquares():
         self.x = array(x)
         self.y = array(y)
 
-        w = [sum(self.x**i) for i in range(2*self.n)]
-        A = array([w[i:i+self.n] for i in range(self.n)])
-        b = array([sum(self.y*self.x**i) for i in range(self.n)])
+        A = array([x**i for i in range(self.n)]).transpose()
 
-        self.a = la.solve(A, b)
+        self.a = la.lstsq(A, y,rcond=None)[0]
          # correcting for errors due to numerical precision
         for j in range(self.n):
-            if abs(self.a[j]) < 1e-12: self.a[j] = 0
+            if abs(self.a[j]) < 1e-10: self.a[j] = 0
 
         return self.a       
 
-    def plot_Data():
-
+    def plot_Data(self):
+        plt.plot(self.x, self.y, 'ro')
+        plt.show()
         return
 
-    def plot_Fit(): 
-
+    def plot_Fit(self): 
+        x = linspace(min(self.x), max(self.x), 100)
+        y = sum([self.a[i]*x**i for i in range(self.n)], axis=0)
+        plt.plot(x, y, 'b')
+        plt.show()
         return
     
-    def plot_Both():
-
+    def plot_Both(self):
+        x = linspace(min(self.x), max(self.x), 100)
+        y = sum([self.a[i]*x**i for i in range(self.n)], axis=0) 
+        plt.plot(self.x, self.y, 'ro', x, y, 'b')
+        plt.show()       
         return
     
 
-
-class L1LeastSquares():
-    def __init__(self, degree=1, penalty=0.1, learningRate=0.01, max_iter=100, tol=1e-3):
-        self.n = degree+1
-        self.a = zeros(degree+1)
-        self.penalty = penalty
-        self.learningRate = learningRate
-        self.max_iter = max_iter
+class L1LinearRegression():
+    def __init__(self, learning_rate=0.01, max_iterations=1000, L1_penalty=1, tol=1e-6):
+        self.learning_rate = learning_rate
+        self.max_iterations = max_iterations
+        self.L1_penalty = L1_penalty
         self.tol = tol
-        self.A = array([])
-        self.b = array([])
-        self.initial_guess = PolyLeastSquares(self.n-1)
+        self.a = array([])
+        self.n = 0  # number of observations
+        self.m = 0  # number of regressors
 
     def fit(self, x, y):
         
-        self.a = self.initial_guess.fit()
         self.x = array(x)
+        self.x = insert(self.x, 0, 1, axis=1)
         self.y = array(y)
+        self.n, self.m = self.x.shape
+        self.a = zeros(self.m)
 
-        w = [sum(self.x**i) for i in range(2*self.n)]
-        A = array([w[i:i+self.n] for i in range(self.n)])
-        b = array([sum(self.y*self.x**i) for i in range(self.n)])
+        for i in range(self.max_iterations):
+            a = self.a.copy()
+            self.a -= self.learning_rate * self.gradient()/self.n
 
-        for i in range(self.max_iter):
-            a = self.a - self.learningRate * self.gradient()
-             # correcting to help ensure convergence
-            for j in range(self.n):
-                if abs(a[j]) < 1e-12: a[j] = 0
-            if la.norm(a - self.a) < self.tol: break
-            self.a = a
+            if sum(abs(a - self.a)) < self.tol: break
+
         return self.a
-
+        
     def gradient(self):
-        return 2*(la.multi_dot([self.A, self.a]) - self.b) + self.penalty*sign(self.a)
-    
-    def plot_Data():
-
-        return
-
-    def plot_Fit(): 
-
-        return
-    
-    def plot_Both():
-
-        return
-
-
-
-test = PolyLeastSquares(2)
+        penalty = self.L1_penalty * sign(self.a)
+        penalty[0] = 0
+        return -2 * dot(self.x.T, self.y - dot(self.x, self.a)) + penalty
 
 test.fit([1, 2, 3, 4, 5], [1, 2, 3, 4, 5])
 print(test.a)
