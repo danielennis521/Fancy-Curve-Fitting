@@ -1,3 +1,8 @@
+import numpy as np
+from numpy import linalg as la
+import matplotlib.pyplot as plt
+
+
 class L1LinearRegression():
     def __init__(self, learning_rate=1e-6, max_iterations=1000, L1_penalty=1, tol=1e-6):
         self.learning_rate = learning_rate
