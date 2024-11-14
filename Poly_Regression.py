@@ -4,13 +4,18 @@ import matplotlib.pyplot as plt
 
 
 class PolyLeastSquares():
-    def __init__(self, degree=1):
+    def __init__(self, degree=1, learning_rate=1e-3, max_iterations=1000, tol=None):
+        self.degree = degree
         self.n = degree+1
         self.a = np.zeros(degree+1)
+        self.learning_rate = learning_rate
+        self.max_iterations = max_iterations
+        self.tol = tol
         
 
-    def fit(self, x, y):
-
+    def fit(self, x, y, type='normal'):
+        method = {'normal': self.fit_normal, 'gd': self.fit_gd}
+        return method[type](x, y)
 
     def fit_normal(self, x, y):
         self.x = np.array(x)
@@ -25,7 +30,7 @@ class PolyLeastSquares():
 
         return self.a
 
-    def fit_gd(self, x, y, degree=1, learning_rate=1e-3, max_iterations=1000, tol=None)
+    def fit_gd(self, x, y):
         if tol is None:
             tol = 1e-2 * la.norm(y)
 
@@ -40,7 +45,7 @@ class PolyLeastSquares():
             gradient = np.dot(X.T, error)
             self.a -= self.learning_rate * gradient * (1/self.m)
 
-            if la.norm(gradient) < self.tol or self.a[0] > 1e6:
+            if la.norm(gradient) < tol or self.a[0] > 1e6:
                 break
 
         print(la.norm(gradient))
@@ -67,6 +72,4 @@ class PolyLeastSquares():
         plt.show()
         plt.cla()       
         return
-    
-
     
