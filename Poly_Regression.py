@@ -10,6 +10,9 @@ class PolyLeastSquares():
         
 
     def fit(self, x, y):
+
+
+    def fit_normal(self, x, y):
         self.x = np.array(x)
         self.y = np.array(y)
 
@@ -20,40 +23,11 @@ class PolyLeastSquares():
         for j in range(self.n):
             if abs(self.a[j]) < 1e-10: self.a[j] = 0
 
-        return self.a       
+        return self.a
 
-    def plot_Data(self):
-        plt.plot(self.x, self.y, 'ro')
-        plt.show()
-        return
-
-    def plot_Fit(self): 
-        x = np.linspace(min(self.x), max(self.x), 100)
-        y = np.sum([self.a[i]*x**i for i in range(self.n)], axis=0)
-        plt.plot(x, y, 'b')
-        plt.show()
-        return
-    
-    def plot_Both(self):
-        x = np.linspace(min(self.x), max(self.x), 100)
-        y = np.sum([self.a[i]*x**i for i in range(self.n)], axis=0) 
-        plt.plot(self.x, self.y, 'ro', x, y, 'b')
-        plt.show()       
-        return
-    
-
-class PolyLeastSquares_GD():
-    def __init__(self, degree=1, learning_rate=1e-3, max_iterations=1000, tol=None):
-        self.n = degree+1
-        self.a = np.zeros(degree+1)
-        self.learning_rate = learning_rate
-        self.max_iterations = max_iterations
-        self.tol = tol
-
-    def fit(self, x, y):
-        
-        if self.tol is None:
-            self.tol = 1e-2 * la.norm(y)
+    def fit_gd(self, x, y, degree=1, learning_rate=1e-3, max_iterations=1000, tol=None)
+        if tol is None:
+            tol = 1e-2 * la.norm(y)
 
         self.x = x
         self.y = y
@@ -61,7 +35,6 @@ class PolyLeastSquares_GD():
         self.m = len(x)
         X = np.array([np.power(x, i) for i in range(self.n)]).T
         
-        loss = []
         for i in range(self.max_iterations):
             error = np.dot(X, self.a) - y
             gradient = np.dot(X.T, error)
@@ -70,27 +43,30 @@ class PolyLeastSquares_GD():
             if la.norm(gradient) < self.tol or self.a[0] > 1e6:
                 break
 
-            loss.append(la.norm(error))
-
         print(la.norm(gradient))
-        return self.a, loss
+        return self.a
     
-    def plot_Data(self):
-        plt.plot(self.x, self.y, 'ro')
+    def plot_Data(self, data_marker='ro'):
+        plt.plot(self.x, self.y, data_marker)
         plt.show()
+        plt.cla()
         return
 
-    def plot_Fit(self): 
+    def plot_Fit(self, fit_marker='b'): 
         x = np.linspace(min(self.x), max(self.x), 100)
         y = np.sum([self.a[i]*x**i for i in range(self.n)], axis=0)
-        plt.plot(x, y, 'b')
+        plt.plot(x, y, fit_marker)
         plt.show()
+        plt.cla()
         return
     
-    def plot_Both(self):
+    def plot_Both(self, data_marker='ro', fit_marker='b'):
         x = np.linspace(min(self.x), max(self.x), 100)
         y = np.sum([self.a[i]*x**i for i in range(self.n)], axis=0) 
-        plt.plot(self.x, self.y, 'ro', x, y, 'b')
-        plt.show()       
+        plt.plot(self.x, self.y, data_marker, x, y, fit_marker)
+        plt.show()
+        plt.cla()       
         return
+    
+
     
