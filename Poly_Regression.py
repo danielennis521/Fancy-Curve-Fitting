@@ -25,21 +25,18 @@ class PolyLeastSquares():
         self.m = len(x)
         self.X = np.array([np.power(x, i) for i in range(self.n)]).T
 
-    
-
         functions = {'normal': self.fit_normal
                      , 'gd': self.fit_gd
                      , 'momentum': self.fit_momentum
                      , 'nesterov': self.fit_nesterov}
 
-        return functions[method](x, y)
+        return functions[method]()
+
 
     # "exact" solution via normal equations
-    def fit_normal(self, x, y):
-        self.x = np.array(x)
-        self.y = np.array(y)
+    def fit_normal(self):
 
-        A = np.array([x**i for i in range(self.n)]).transpose()
+        A = np.array([self.x**i for i in range(self.n)]).transpose()
 
         self.a = la.lstsq(A, y,rcond=None)[0]
          # correcting for errors due to numerical precision
@@ -48,11 +45,12 @@ class PolyLeastSquares():
 
         return self.a
 
+
     # standard gradient descent
-    def fit_gd(self, x, y):
+    def fit_gd(self):
         
         for i in range(self.max_iterations):
-            error = np.dot(self.X, self.a) - y
+            error = np.dot(self.X, self.a) - self.y
             gradient = np.dot(self.X.T, error)
             self.a -= self.learning_rate * gradient * (1/self.m)
 
@@ -61,11 +59,12 @@ class PolyLeastSquares():
 
         return self.a
 
+
     # gradient descent with momentum
-    def fit_momentum(self, x, y):
+    def fit_momentum(self):
 
         for i in range(self.max_iterations):
-            error = np.dot(self.X, self.a) - y
+            error = np.dot(self.X, self.a) - self.y
             gradient = np.dot(self.X.T, error)
             v = self.gamma*v + self.learning_rate * gradient * ((1-self.gamma)/self.m)
             self.a -= v
@@ -75,11 +74,12 @@ class PolyLeastSquares():
 
         return self.a
 
+
     # Nesterov accelerated gradient descent
-    def fit_nesterov(self, x, y):     
+    def fit_nesterov(self):     
         
         for i in range(self.max_iterations):
-            error = np.dot(self.X, self.a+self.gamma*v) - y
+            error = np.dot(self.X, self.a+self.gamma*v) - self.y
             gradient = np.dot(self.X.T, error)
             v = self.gamma*v + self.learning_rate * gradient * ((1-self.gamma)/self.m)
             self.a -= v
