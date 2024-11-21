@@ -2,16 +2,16 @@ import numpy as np
 import numpy.polynomial.polynomial as p
 
 
-def rescale_polynomial(p, a0, b0, a1, b1):
-    # Rescale the polynomial p from the interval [a0, b0] to [a1, b1]
+def rescale_polynomial(q, a0, b0, a1, b1):
+    # Rescale the polynomial q from the interval [a0, b0] to [a1, b1]
     s = (b1 - a1) / (b0 - a0)
-    new = []
-    for i in range(len(p)):
+    new = [0]
+    for i in range(len(q)):
         t = [1]
         for j in range(i):
             t = p.polymul(t, [a1 - a0*s, s])
 
-        new = p.polyadd(np, p.polymul(p[i], t))
+        new = p.polyadd(new, p.polymul(q[i], t))
 
     return new
 
