@@ -6,8 +6,8 @@ import polynomial_basis as b
 
 
 class PolyLeastSquares():
-    def __init__(self, degree=1, learning_rate=2*1e-6, max_iterations=2*int(1e6), tol=None, momentum=0.2
-                 , basis='monomial'):
+    def __init__(self, degree=1, learning_rate=2*1e-6, max_iterations=int(1e6), tol=None, momentum=0.2
+                 , basis='monomial', normalize=False):
         self.degree = degree
         self.n = degree+1
         self.c = np.zeros(degree+1)
@@ -15,10 +15,11 @@ class PolyLeastSquares():
         self.max_iterations = max_iterations
         self.tol = tol
         self.gamma = momentum
-        self.basis = basis       
+        self.basis = basis  
+        self.normalize = normalize
         
 
-    def fit(self, x, y, method='normal'):
+    def fit(self, x, y, method='numpy'):
         if self.tol is None:
             self.tol = 1e-1 * la.norm(y)
 
@@ -37,7 +38,11 @@ class PolyLeastSquares():
         A = [[p.polyval(z, l) for l in self.L] for z in self.x]
         self.X = np.array(A)
 
-        functions = {'normal': self.fit_normal
+        if self.normalize:
+            self.convert_to_zscores()
+
+        functions = {'numpy': self.fit_numpy
+                     , 'normal': self.fit_normal
                      , 'gd': self.fit_gd
                      , 'momentum': self.fit_momentum
                      , 'nesterov': self.fit_nesterov}
@@ -45,10 +50,21 @@ class PolyLeastSquares():
         return functions[method]()
 
 
-    # "exact" solution via normal equations
-    def fit_normal(self):
+    # uses numpy's lstsq function to solve for least squares coefficients
+    def fit_numpy(self):
         self.c = la.lstsq(self.X, self.y,rcond=None)[0]
          # correcting for errors due to numerical precision
+        for j in range(self.n):
+            if abs(self.c[j]) < 1e-10: self.c[j] = 0
+
+        return self.c
+    
+    
+    # "exact" solution via normal equations
+    def fit_normal(self):
+        A = np.dot(self.X.T, self.X)
+        b = np.dot(self.X.T, self.y)
+        self.c = la.solve(A, b)
         for j in range(self.n):
             if abs(self.c[j]) < 1e-10: self.c[j] = 0
 
@@ -112,6 +128,20 @@ class PolyLeastSquares():
             raise ValueError('Invalid basis type, please choose from: monomial, chebyshev, legendre, hermite')
 
 
+    def convert_to_zscores(self):
+        mu = np.mean(self.X[:, 1:], axis = 0)
+        sigma = np.std(self.X[:, 1:], axis = 0) 
+        sigma.insert(0, 1)
+        mu = np.insert(mu, 0, 0)
+        self.X[:, 1:] = (self.X[:, 1:] - mu) / sigma
+        self.L = [p.polyadd([1/s, -m/s], l) for s, m, l in zip(sigma, mu, self.L)]
+
+    def get_coefficients(self):
+        c = [0]
+        for i in range(self.n):
+            c = p.polyadd(c, p.polymul([self.c[i]], self.L[i]))
+        return c
+
 
     def predict(self, x):
         A = [[p.polyval(x, l) for l in self.L] for x in x]
@@ -141,3 +171,4 @@ class PolyLeastSquares():
         plt.show()
         plt.cla()       
         return
+    
