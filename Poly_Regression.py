@@ -131,10 +131,10 @@ class PolyLeastSquares():
     def convert_to_zscores(self):
         mu = np.mean(self.X[:, 1:], axis = 0)
         sigma = np.std(self.X[:, 1:], axis = 0) 
-        sigma.insert(0, 1)
-        mu = np.insert(mu, 0, 0)
         self.X[:, 1:] = (self.X[:, 1:] - mu) / sigma
-        self.L = [p.polyadd([1/s, -m/s], l) for s, m, l in zip(sigma, mu, self.L)]
+        self.L[1:] = [p.polymul(1/s, p.polyadd(-m, l)) for m, s, l in zip(mu, sigma, self.L[1:])]
+        return
+
 
     def get_coefficients(self):
         c = [0]
