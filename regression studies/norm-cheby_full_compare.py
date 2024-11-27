@@ -1,8 +1,5 @@
-import matplotlib.pyplot as plt
 import Poly_Regression as pr
 import numpy as np
-import polynomial_basis as pb
-import numpy.polynomial.polynomial as p
 import pandas as pd
 
 l = -1
@@ -11,6 +8,8 @@ n = 25
 d = 5
 m = 4
 c = []
+c_mon = []
+c_cheb = []
 diff = []
 x = []
 y = []
@@ -28,14 +27,20 @@ for i in range(10000):
     model.fit(x, y, method='gd')
     r1 = model.predict(x)
     res1.append(np.linalg.norm(r1 - y)**2)
+    c_mon.append(model.get_coefficients())
 
     model.normalize = False
     model.basis = 'chebyshev'
     model.fit(x, y, method='gd')
     r2 = model.predict(x)
     res2.append(np.linalg.norm(r2 - y)**2)
+    c_cheb.append(model.get_coefficients())
 
     c.append(a)
 
-pd.DataFrame({'normalized monomial': res1, 'chebyshev': res2, 'coefficients':c}).to_csv('residuals.csv')
-
+pd.DataFrame({'normalized monomial': res1,
+            'chebyshev': res2,
+            'origional coefficients':c,
+            'monomial coefficients': c_mon,
+            'chebyshev coefficients': c_cheb
+            }).to_csv('residuals.csv')
