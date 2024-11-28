@@ -1,3 +1,5 @@
+# This is the code used to generate the data used in the regression_and_orthogonal_polynomial notebook
+
 import Poly_Regression as pr
 import numpy as np
 import numpy.polynomial.polynomial as p
@@ -52,7 +54,7 @@ c_cheb = [r.tolist() for r in c_cheb]
 pd.DataFrame({'normalized monomial': res1,
             'chebyshev': res2,
             'origional coefficients':c,
-            }).to_csv('residuals.csv')
+            }).to_csv('residuals.csv'. index=False)
 
 with open('residuals.json', 'w') as f:
     json.dump({'normalized monomial': res1,
