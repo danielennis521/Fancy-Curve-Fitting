@@ -8,6 +8,17 @@ import polynomial_basis as b
 class PolyLeastSquares():
     def __init__(self, degree=1, learning_rate=2*1e-6, max_iterations=int(1e6), tol=None, momentum=0.2
                  , basis='monomial', normalize=False):
+        # inputs:
+        # degree: degree of polynomial used in regression
+        # learning_rate: step size when using gradient descent
+        # max_iterations: maximum number of iterations for any gradient descent variant
+        # tol: tolerance for stopping criteria
+        # momentum: momentum parameter for gradient descent with momentum
+        #           0 <= momentum < 1, 0 is standard gradient descent
+        # basis: class of polynomials used as regressors\
+        #        options: monomial, chebyshev, legendre, hermite
+        # normalize: boolean, if True, regressors are normalized to z-scores
+
         self.degree = degree
         self.n = degree+1
         self.c = np.zeros(degree+1)
@@ -20,6 +31,14 @@ class PolyLeastSquares():
         
 
     def fit(self, x, y, method='numpy'):
+        # inputs:
+        # x: array of points where data was collected
+        # y: array of observed values at points x
+        # method: method used to solve for coefficients
+        #         options: numpy, normal, gd, momentum, nesterov
+        #
+        # returns: array of coefficients for polynomial fit
+
         if self.tol is None:
             self.tol = 1e-1 * la.norm(y)
 
