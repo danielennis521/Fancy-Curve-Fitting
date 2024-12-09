@@ -1,3 +1,7 @@
+# This class was designed to test and compare a variety of different approaches to 
+# implementing polynomial regression. 
+
+
 import numpy as np
 import numpy.polynomial.polynomial as p
 from numpy import linalg as la
@@ -7,7 +11,7 @@ import polynomial_basis as b
 
 class PolyLeastSquares():
     def __init__(self, degree=1, learning_rate=2*1e-6, max_iterations=int(1e6), tol=None, momentum=0.2
-                 , basis='monomial', normalize=False):
+                 , basis='monomial', normalize=False, rescale=False):
         # inputs:
         # degree: degree of polynomial used in regression
         # learning_rate: step size when using gradient descent
@@ -15,9 +19,12 @@ class PolyLeastSquares():
         # tol: tolerance for stopping criteria
         # momentum: momentum parameter for gradient descent with momentum
         #           0 <= momentum < 1, 0 is standard gradient descent
-        # basis: class of polynomials used as regressors\
+        # basis: class of polynomials used as regressors
         #        options: monomial, chebyshev, legendre, hermite
         # normalize: boolean, if True, regressors are normalized to z-scores
+        #            method used is convert_to_zscores()
+        # rescale: boolean, if True, regressors are rescaled to fit data
+        #          method used is rescale_poly()
 
         self.degree = degree
         self.n = degree+1
@@ -28,7 +35,11 @@ class PolyLeastSquares():
         self.gamma = momentum
         self.basis = basis  
         self.normalize = normalize
+        self.rescale = rescale
         
+    ###########################################
+    # methods for fitting coefficients
+    ###########################################
 
     def fit(self, x, y, method='numpy'):
         # inputs:
@@ -42,7 +53,6 @@ class PolyLeastSquares():
         if self.tol is None:
             self.tol = 1e-1 * la.norm(y)
 
-        v = np.zeros(self.n)
         self.x = x
         self.y = y
         self.c = np.zeros(self.n)
@@ -53,6 +63,9 @@ class PolyLeastSquares():
         except ValueError as e:
             print(e)
             return
+
+        if self.rescale:
+            self.rescale_poly()
 
         A = [[p.polyval(z, l) for l in self.L] for z in self.x]
         self.X = np.array(A)
@@ -65,7 +78,6 @@ class PolyLeastSquares():
                      , 'gd': self.fit_gd
                      , 'momentum': self.fit_momentum
                      , 'nesterov': self.fit_nesterov}
-
         return functions[method]()
 
 
@@ -75,7 +87,6 @@ class PolyLeastSquares():
          # correcting for errors due to numerical precision
         for j in range(self.n):
             if abs(self.c[j]) < 1e-10: self.c[j] = 0
-
         return self.c
     
     
@@ -86,13 +97,12 @@ class PolyLeastSquares():
         self.c = la.solve(A, b)
         for j in range(self.n):
             if abs(self.c[j]) < 1e-10: self.c[j] = 0
-
         return self.c
 
 
     # standard gradient descent
+    # parameters: learning_rate, max_iterations, tol
     def fit_gd(self):
-        
         for i in range(self.max_iterations):
             error = np.dot(self.X, self.c) - self.y
             gradient = np.dot(self.X.T, error)
@@ -100,13 +110,12 @@ class PolyLeastSquares():
 
             if la.norm(gradient) < self.tol or self.c[0] > 1e6:
                 break
-
         return self.c
 
 
     # gradient descent with momentum
+    # parameters: learning_rate, max_iterations, tol, momentum
     def fit_momentum(self):
-
         for i in range(self.max_iterations):
             error = np.dot(self.X, self.c) - self.y
             gradient = np.dot(self.X.T, error)
@@ -115,13 +124,12 @@ class PolyLeastSquares():
 
             if la.norm(gradient) < self.tol or self.c[0] > 1e6:
                 break
-
         return self.c
 
 
     # Nesterov accelerated gradient descent
+    # parameters: learning_rate, max_iterations, tol, momentum
     def fit_nesterov(self):     
-        
         for i in range(self.max_iterations):
             error = np.dot(self.X, self.c+self.gamma*v) - self.y
             gradient = np.dot(self.X.T, error)
@@ -130,9 +138,11 @@ class PolyLeastSquares():
 
             if la.norm(gradient) < self.tol or self.c[0] > 1e6:
                 break
-
         return self.c
     
+    ###########################################
+    # miscelanious methods
+    ###########################################
 
     def generate_basis(self):
         if self.basis == 'monomial':
@@ -155,6 +165,13 @@ class PolyLeastSquares():
         return
 
 
+    def rescale_poly(self):
+        scale = (max(self.y) - min(self.y)) / 2
+        center = (max(self.y) + min(self.y)) / 2
+        self.L = [p.polyadd(center, p.polymul(scale, l)) for l in self.L]    
+        return
+
+
     def get_coefficients(self):
         c = [0]
         for i in range(self.n):
@@ -165,7 +182,10 @@ class PolyLeastSquares():
     def predict(self, x):
         A = [[p.polyval(x, l) for l in self.L] for x in x]
         return np.dot(A, self.c)
-    
+
+    ###########################################
+    # methods for visualization
+    ###########################################   
 
     def plot_Data(self, data_marker='ro'):
         plt.plot(self.x, self.y, data_marker)
@@ -191,3 +211,12 @@ class PolyLeastSquares():
         plt.cla()       
         return
     
+
+    def plot_regrssors(self):
+        x = np.linspace(min(self.x), max(self.x), 100)
+        for i in range(self.n):
+            y = [p.polyval(z, self.L[i]) for z in x]
+            plt.plot(x, y)
+        plt.show()
+        plt.cla()
+        return
