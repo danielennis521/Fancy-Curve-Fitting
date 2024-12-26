@@ -63,3 +63,63 @@ def Legendre_Polynomials(n, a=-1, b=1):
             L[i] = rescale_polynomial(L[i], -1, 1, a, b)
     
     return L
+
+
+
+def b_splines(deg, knots, interior):
+
+    # degree of the polynomial splines
+    # knots: array of knots
+    # interior: 1x2 array, [a, b], where a is the lowest index of an 
+    #           interior knot and b is the highest index of an interior knot
+    #           N.B. the number of exterior knots must be 2*deg
+    # returns: list of polynomials that define the B-splines
+
+    if interior[0] < deg or interior[1] > len(knots) - deg:
+        print('Error: invalid interior knot indices')
+        return
+    
+    n = interior[1] - interior[0] + 2*deg
+
+    splines = np.zeros((n, 2))
+    for i in range():  
+        splines[i] = [1]
+    
+    for i in range(n):
+        splines[i] = spline(t)
+
+    return
+
+
+def spline(t):
+    # t: the set of points used to find the spline
+    #    degree is not specified, it's infered from the length of t
+    #    i.e. the degree of the spline is len(t) - 1
+    L=[]
+
+    for i in range(len(t)-1): # loop through the splines of order i
+        L.append([])
+        for j in range(len(t)-i-1): # loop through the knots
+            if i==0:
+                L[i].append([1])
+            else:
+                L[i].append([])
+                P1 = [p.polymul([-t[j], 1], L[i-1][j][k])/(t[j+i] - t[j]) for k in range(i)]
+                P2 = [p.polymul([t[j+i+1], -1], L[i-1][j+1][k])/(t[j+i+1] - t[j+1]) for k in range(i)]
+
+                L[i][j].append(P1[0])
+                if i > 1:
+                    for k in range(i-1):
+                        L[i][j].append(p.polyadd(P1[i-1+k], P2[k]))
+                L[i][j].append(P2[-1])
+    
+    return L[-1]
+
+
+def piecewise_polynomial(x, y, deg, knots, interior):
+
+
+    return 
+
+
+print(spline([0, 1, 2, 3]))
