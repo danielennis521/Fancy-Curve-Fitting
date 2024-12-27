@@ -66,7 +66,7 @@ def Legendre_Polynomials(n, a=-1, b=1):
 
 
 def b_splines(deg, knots, interior):
-    # degree of the polynomial splines
+    # deg: degree of the polynomials that form the splines
     # knots: array of knots
     # interior: 1x2 array, [a, b], where a is the lowest index of an 
     #           interior knot and b is the highest index of an interior knot
@@ -104,29 +104,4 @@ def spline(t):
                         L[i][j].append(p.polyadd(P1[1+k], P2[k]))
                 L[i][j].append(P2[-1])
 
-        # if i != 0:
-        #     for j in range(len(t)-i-1):
-        #         plot_spline(L[i][j], t[j:j+i+2])
-
     return L[-1][0]
-
-
-def piecewise_polynomial(x, y, deg, knots, interior):
-
-    return 
-
-
-def plot_spline(s, x, color='b'):
-    for i in range(len(s)):
-        t = np.linspace(x[i], x[i+1], 100)
-        plt.plot(t, [p.polyval(z, s[i]) for z in t], color)
-    plt.show()
-
-
-def plot_spline_set(s, x, colors=['b', 'g', 'r', 'k']):
-    for i in range(len(s)):
-        for j in range(len(s[0])):
-            t = np.linspace(x[i+j], x[i+j+1], 100)
-            plt.plot(t, [p.polyval(z, s[i][j]) for z in t], colors[i%len(colors)])
-    plt.show()
-
