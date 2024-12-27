@@ -65,30 +65,21 @@ def Legendre_Polynomials(n, a=-1, b=1):
     return L
 
 
-
 def b_splines(deg, knots, interior):
-
     # degree of the polynomial splines
     # knots: array of knots
     # interior: 1x2 array, [a, b], where a is the lowest index of an 
     #           interior knot and b is the highest index of an interior knot
     #           N.B. the number of exterior knots must be 2*deg
     # returns: list of polynomials that define the B-splines
-
-    if interior[0] < deg or interior[1] > len(knots) - deg:
-        print('Error: invalid interior knot indices')
-        return
     
-    n = interior[1] - interior[0] + 2*deg
-
-    splines = np.zeros((n, 2))
-    for i in range():  
-        splines[i] = [1]
+    n = interior[1] - interior[0] + deg
+    splines = []
     
     for i in range(n):
-        splines[i] = spline(t)
+        splines.append(spline(knots[i:i+deg+2]))
 
-    return
+    return splines
 
 
 def spline(t):
@@ -110,16 +101,32 @@ def spline(t):
                 L[i][j].append(P1[0])
                 if i > 1:
                     for k in range(i-1):
-                        L[i][j].append(p.polyadd(P1[i-1+k], P2[k]))
+                        L[i][j].append(p.polyadd(P1[1+k], P2[k]))
                 L[i][j].append(P2[-1])
-    
-    return L[-1]
+
+        # if i != 0:
+        #     for j in range(len(t)-i-1):
+        #         plot_spline(L[i][j], t[j:j+i+2])
+
+    return L[-1][0]
 
 
 def piecewise_polynomial(x, y, deg, knots, interior):
 
-
     return 
 
 
-print(spline([0, 1, 2, 3]))
+def plot_spline(s, x, color='b'):
+    for i in range(len(s)):
+        t = np.linspace(x[i], x[i+1], 100)
+        plt.plot(t, [p.polyval(z, s[i]) for z in t], color)
+    plt.show()
+
+
+def plot_spline_set(s, x, colors=['b', 'g', 'r', 'k']):
+    for i in range(len(s)):
+        for j in range(len(s[0])):
+            t = np.linspace(x[i+j], x[i+j+1], 100)
+            plt.plot(t, [p.polyval(z, s[i][j]) for z in t], colors[i%len(colors)])
+    plt.show()
+
