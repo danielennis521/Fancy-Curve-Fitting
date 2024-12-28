@@ -1,108 +1,103 @@
+# this file contains the class poly_Splines, which is used to create a piecewise polynomial function 
+# that interpolates a set of data points. The motivation for implementing this as a class is to provide an
+# easy way to work with the piecewise fit since it potentially involves a large number of polynomials, each
+# with its own set of coefficients. 
+
+
 import numpy as np
 import numpy.polynomial.polynomial as p
+from numpy import linalg as la
 import matplotlib.pyplot as plt
+import polynomial_basis as b
 
 
-def rescale_polynomial(q, a0, b0, a1, b1):
-    # Rescale the polynomial q from the interval [a0, b0] to [a1, b1]
-    s = (b0 - a0)/(b1 - a1) 
-    new = [0]
-    for i in range(len(q)):
-        t = [1]
-        for j in range(i):
-            t = p.polymul(t, [a0 - a1*s, s])
-
-        new = p.polyadd(new, p.polymul(q[i], t))
-
-    return new
-
-
-def monomials(n):
-    return [ np.array(np.zeros(i).tolist() + [1.0]) for i in range(n)]
+class B_Splines:
+    def __init__(self, deg, knots, interior):
+        # inputs:
+        # deg: Degree of the polynomials used to build splines
+        # knots: The whole set of knots used to form the splines
+        # interior: 1x2 array, [a, b], where a is the lowest index of an 
+        #           interior knot and b is the highest index of an interior knot
+        #           N.B. the number of exterior knots must be 2*deg
+        self.calc_splines(deg, knots, interior)
+        self.weights = [1 for i in self.splines]
+        print(self.weights)
 
 
-def Chebyshev_Polynomials(n, a=-1, b=1):
-    for i in range(n):
-        if i == 0:
-            L = [np.array([1])]
-        elif i == 1:
-            L.append(np.array([0, 1]))
+    def calc_splines(self, deg, knots, interior):
+        # inputs:
+        # deg: Degree of the polynomials used to build splines
+        # knots: The whole set of knots used to form the splines
+        # interior: 1x2 array, [a, b], where a is the lowest index of an 
+        #           interior knot and b is the highest index of an interior knot
+        #           N.B. the number of exterior knots must be 2*deg
+        self.splines = b.b_splines(deg, knots, interior)
+        self.deg = deg
+        self.knots = knots
+        self.interior = interior
+
+
+    def fit(self, X, Y):
+        # inputs:
+        # x: point where observation was made
+        # y: observed value
+        #   N.B. the measurements you want to fit need to lie within the
+        #   set of interior knots
+
+        A = np.array([[self.eval_spline(x, j) for j in range(len(self.splines))] for x in X])
+
+        self.weights = np.linalg.lstsq(A, Y, rcond=0)[0]
+    
+
+    def eval_spline(self, x, i):
+        # inputs:
+        # x: data point to evaluate
+        # i: which spline to evaluate
+
+        absolute_position = len(list(filter(lambda u: u<=x, self.knots))) - 1
+        relative_position = absolute_position - i
+
+        if relative_position >= 0 and relative_position < len(self.splines[i]):
+            return p.polyval(x, self.splines[i][relative_position])
         else:
-            L.append(p.polysub(p.polymul([0, 2], L[i-1]), L[i-2]))
-
-    if a != -1 or b != 1:
-        for i in range(n):
-            L[i] = rescale_polynomial(L[i], -1, 1, a, b)
-
-    return L
+            return 0.0
 
 
-def Legendre_Polynomials(n, a=-1, b=1):
-    # The Legendre polynomials are much more complicated to generate than the Chebyshev polynomials
-    # because of this we simply store the first 10 to minimize how often we need to generate them.
-    # For higher orders we will generate them on the fly using Rodrigues' formula.
-
-    L = [np.array([1]),
-         np.array([0, 1]),
-         np.array([-0.5, 0, 1.5]),
-         np.array([0, -1.5, 0, 2.5]),
-         np.array([3, 0, -30, 0, 35])/8,
-         np.array([0, 15, 0, -70, 0, 63])/8,
-         np.array([-5, 0, 105, 0, -315, 0, 231])/16,
-         np.array([0, -35, 0, 315, 0, -693, 0, 429])/16,
-         np.array([35, 0, -1260, 0, 6930, 0, -12012, 0, 6435])/128,
-         np.array([0, 315, 0, -4620, 0, 18018, 0, -25740, 0, 12155])/128]
+    def predict(self, x):
+        y = 0
+        for i in range(len(self.weights)):
+            y += self.weights[i] * self.eval_spline(x, i)
+        return y
     
-    if n <= 10:
-        L = L[:n]
-    else:
-        for i in range(10, n):
-            L.append(p.polyder(p.polypow([1, 0, -1] , i), m=i) / (2**i * np.math.factorial(i)))
+
+    def plot_spline_set(self, colors=['b', 'g', 'r', 'k']):
+        for i in range(len(self.splines)):
+            for j in range(len(self.splines[0])):
+                t = np.linspace(self.knots[i+j], self.knots[i+j+1], 100)
+                plt.plot(t, [p.polyval(z, self.splines[i][j]) for z in t], colors[i%len(colors)])
+        plt.show()
+
     
-    if a != -1 or b != 1:
-        for i in range(n):
-            L[i] = rescale_polynomial(L[i], -1, 1, a, b)
+    def plot_spline(self, i, color='b'):
+    # plot the ith spline (blue dots represent the endpoints of the interval)
+        for j in range(len(self.splines[i])):
+            t = np.linspace(self.knots[i+j], self.knots[i+j+1], 100)
+            plt.plot(t, [p.polyval(z, self.splines[i][j]) for z in t], color)
+        plt.show()
+
     
-    return L
-
-
-def b_splines(deg, knots, interior):
-    # deg: degree of the polynomials that form the splines
-    # knots: array of knots
-    # interior: 1x2 array, [a, b], where a is the lowest index of an 
-    #           interior knot and b is the highest index of an interior knot
-    #           N.B. the number of exterior knots must be 2*deg
-    # returns: list of polynomials that define the B-splines
+    def plot_fit(self, data=False, color='b'):
+    # plot the weighted sum of the splines
+        for i in range(len(self.knots)-1):
+            interval = np.linspace(self.knots[i], self.knots[i+1], 100)
+            y = [self.predict(t) for t in interval]
+            plt.plot(interval, y, color)
+        plt.show()
+        return
     
-    n = interior[1] - interior[0] + deg
-    splines = []
-    
-    for i in range(n):
-        splines.append(spline(knots[i:i+deg+2]))
 
-    return splines
-
-
-def spline(t):
-    # t: the set of points used to find the spline
-    #    degree is not specified, it's infered from the length of t
-    #    i.e. the degree of the spline is len(t) - 1
-    L=[]
-
-    for i in range(len(t)-1): # loop through the splines of order i
-        L.append([])
-        for j in range(len(t)-i-1): # loop through the knots
-            if i==0:
-                L[i].append([1])
-            else:
-                L[i].append([])
-                P1 = [p.polymul([-t[j], 1], L[i-1][j][k])/(t[j+i] - t[j]) for k in range(i)]
-                P2 = [p.polymul([t[j+i+1], -1], L[i-1][j+1][k])/(t[j+i+1] - t[j+1]) for k in range(i)]
-
-                L[i][j].append(P1[0])
-                if i > 1:
-                    for k in range(i-1):
-                        L[i][j].append(p.polyadd(P1[1+k], P2[k]))
-                L[i][j].append(P2[-1])
-
-    return L[-1][0]
+    def plot_data(self):
+        # plots the last set of data that was fit
+        plt.plot(self.x, self.y, 'ro')
+        plt.show()
+        return 
