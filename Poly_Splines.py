@@ -44,8 +44,10 @@ class B_Splines:
         #   N.B. the measurements you want to fit need to lie within the
         #   set of interior knots
 
-        A = np.array([[self.eval_spline(x, j) for j in range(len(self.splines))] for x in X])
+        self.x = X
+        self.y = Y
 
+        A = np.array([[self.eval_spline(x, j) for j in range(len(self.splines))] for x in X])
         self.weights = np.linalg.lstsq(A, Y, rcond=0)[0]
     
 
@@ -86,18 +88,19 @@ class B_Splines:
         plt.show()
 
     
-    def plot_fit(self, data=False, color='b'):
+    def plot_fit(self, data=False, fit_color='b', data_color='ro'):
     # plot the weighted sum of the splines
         for i in range(len(self.knots)-1):
             interval = np.linspace(self.knots[i], self.knots[i+1], 100)
             y = [self.predict(t) for t in interval]
-            plt.plot(interval, y, color)
+            plt.plot(interval, y, fit_color)
+
+        if data:
+            plt.plot(self.x, self.y, data_color)
         plt.show()
-        return
-    
+
 
     def plot_data(self):
         # plots the last set of data that was fit
         plt.plot(self.x, self.y, 'ro')
         plt.show()
-        return 
