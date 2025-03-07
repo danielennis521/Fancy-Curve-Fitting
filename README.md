@@ -7,3 +7,7 @@ to ordinary least squares (least absolute deviates, non-normal residuals, etc.)
 
 ## Splines 
 Similar to Polynomial Regression but not as extensive. 
+
+## Polynomial Basis Study
+Main thing to look at here is the jupyter notebook. It looks at how a monomial basis performs
+relative to a set of orthogonal polynomials in iterative algorithms like gradient descent.
